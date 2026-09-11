@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Ponto, RH & Financeiro Completo</title>
+  <link rel="stylesheet" href="./CSS/style.css">
+
+
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>Ponto Eletrônico, RH & Financeiro</h1>
+        <p style="font-size: 0.8rem; opacity: 0.9;">Valores Brutos (Sem INSS/FGTS) | Pagamentos: Dia 20 e 5º Dia Útil</p>
+      </div>
+      <div class="info-jornada" id="clock">--:--:--</div>
+    </header>
+
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('ponto')">Registrar Ponto</button>
+      <button class="nav-btn" onclick="switchTab('ajustes')">Editar Ponto / Atestados</button>
+      <button class="nav-btn" onclick="switchTab('funcionarios')">Funcionários</button>
+      <button class="nav-btn" onclick="switchTab('banco')">Banco / H. Extra / Descontos</button>
+      <button class="nav-btn" onclick="switchTab('ferias')">Controle de Férias</button>
+      <button class="nav-btn" onclick="switchTab('decimo')">13º Salário</button>
+      <button class="nav-btn" onclick="switchTab('folha')">Folha & Pagamentos</button>
+    </nav>
+
+    <!-- ABA 1: REGISTRAR PONTO -->
+    <div id="tab-ponto" class="tab-content active">
+      <div class="card">
+        <h2>Registro Instantâneo (Horário do PC)</h2>
+        <div class="form-group">
+          <label for="select-employee-ponto">Selecione o Funcionário:</label>
+          <select id="select-employee-ponto" onchange="renderTodayStatus()"></select>
+        </div>
+
+        <div id="ponto-actions" style="display: none;">
+          <p><strong>Registrar marcação para hoje (<span id="today-date"></span>):</strong></p>
+          <div class="punch-grid">
+            <button class="btn-punch btn-entrada" onclick="registerPunch('entrada')">Entrada</button>
+            <button class="btn-punch btn-almoco" onclick="registerPunch('saida_almoco')">Saída Almoço</button>
+            <button class="btn-punch btn-retorno" onclick="registerPunch('retorno_almoco')">Retorno Almoço</button>
+            <button class="btn-punch btn-saida" onclick="registerPunch('saida')">Saída Final</button>
+          </div>
+          
+          <div style="margin-top: 20px;">
+            <h3>Marcações de Hoje</h3>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Entrada</th>
+                    <th>Saída Almoço</th>
+                    <th>Retorno Almoço</th>
+                    <th>Saída Final</th>
+                    <th>Horas Trabalhadas</th>
+                  </tr>
+                </thead>
+                <tbody id="today-punches-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 2: EDITAR PONTO / ATESTADOS -->
+    <div id="tab-ajustes" class="tab-content">
+      <div class="card">
+        <h2>Ajuste Manual de Marcações & Justificativas (Atestados / Declarações)</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+          Altere horários manualmente para corrigir esquecimentos ou abonar atrasos/ausências com justificativa.
+        </p>
+
+        <div class="form-row" style="margin-bottom: 15px;">
+          <div class="form-group">
+            <label for="select-employee-edit">Funcionário:</label>
+            <select id="select-employee-edit" onchange="renderEditTable()"></select>
+          </div>
+          <div class="form-group">
+            <label for="input-date-edit">Data do Registro:</label>
+            <input type="date" id="input-date-edit" onchange="renderEditTable()">
+          </div>
+        </div>
+
+        <div id="edit-area" style="display: none;">
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Entrada</th>
+                  <th>Saída Almoço</th>
+                  <th>Retorno Almoço</th>
+                  <th>Saída Final</th>
+                  <th>Justificativa / Obs</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="edit-punches-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 3: FUNCIONÁRIOS -->
+    <div id="tab-funcionarios" class="tab-content">
+      <div class="flex-row">
+        <div class="card">
+          <h2 id="form-title">Cadastrar Novo Funcionário</h2>
+          <form id="form-employee" onsubmit="saveEmployee(event)">
+            <input type="hidden" id="emp-id">
+            <div class="form-group">
+              <label for="emp-name">Nome Completo</label>
+              <input type="text" id="emp-name" required placeholder="Ex: João Silva">
+            </div>
+            <div class="form-group">
+              <label for="emp-role">Cargo</label>
+              <input type="text" id="emp-role" required placeholder="Ex: Auxiliar de Escritório">
+            </div>
+            <div class="form-group">
+              <label for="emp-salary">Salário Bruto Mensal (R$)</label>
+              <input type="number" id="emp-salary" step="0.01" required placeholder="Ex: 3000.00">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="emp-work-start">Horário Entrada</label>
+                <input type="time" id="emp-work-start" value="09:00" required>
+              </div>
+              <div class="form-group">
+                <label for="emp-work-end">Horário Saída</label>
+                <input type="time" id="emp-work-end" value="17:30" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="emp-admission">Data de Admissão</label>
+              <input type="date" id="emp-admission" required>
+            </div>
+            <div class="btn-group">
+              <button type="submit" id="btn-submit" class="btn">Cadastrar Funcionário</button>
+              <button type="button" id="btn-cancel" class="btn btn-cancel" style="display: none;" onclick="resetForm()">Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Lista de Funcionários</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome / Cargo</th>
+                  <th>Salário Bruto</th>
+                  <th>Jornada</th>
+                  <th>Admissão</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="employee-list-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 4: BANCO DE HORAS E CÁLCULO FINANCEIRO -->
+    <div id="tab-banco" class="tab-content">
+      <div class="card">
+        <h2>Banco de Horas, Horas Extras e Descontos</h2>
+        <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.85rem;">
+          Cálculo financeiro bruto. Hora extra calculada a +50% sobre o valor da hora normal.
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Valor Hora</th>
+                <th>Saldo de Horas</th>
+                <th>Cálculo Hora Extra (+50%)</th>
+                <th>Valor Desconto (Débito)</th>
+                <th>Situação</th>
+              </tr>
+            </thead>
+            <tbody id="banco-horas-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 5: CONTROLE DE FÉRIAS -->
+    <div id="tab-ferias" class="tab-content">
+      <div class="flex-row">
+        <div class="card">
+          <h2>Lançar / Programar Férias</h2>
+          <form id="form-vacation" onsubmit="saveVacation(event)">
+            <div class="form-group">
+              <label for="select-vacation-emp">Funcionário</label>
+              <select id="select-vacation-emp" required></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="vacation-start">Data de Início</label>
+                <input type="date" id="vacation-start" required>
+              </div>
+              <div class="form-group">
+                <label for="vacation-days">Qtd. Dias</label>
+                <input type="number" id="vacation-days" value="30" min="1" max="30" required>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button type="submit" class="btn btn-warning">Registrar Férias</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="flex: 2;">
+          <h2>Painel Geral de Férias</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Funcionário</th>
+                  <th>Status Atual</th>
+                  <th>Férias Gozadas</th>
+                  <th>Situação CLT</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="ferias-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 15px;">
+        <h2>Histórico de Férias e Cálculo Bruto (Sem INSS / FGTS)</h2>
+        <p style="margin-bottom: 10px; font-size:0.85rem; color:var(--text-muted);">
+          Valor das Férias = (Salário / 30 × Dias) + 1/3 Constitucional.
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Período</th>
+                <th>Dias</th>
+                <th>Valor Base Férias</th>
+                <th>1/3 Constitucional</th>
+                <th>Total Bruto a Receber</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="ferias-history-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 6: 13º SALÁRIO -->
+    <div id="tab-decimo" class="tab-content">
+      <div class="card">
+        <h2>Cálculo de 13º Salário Bruto</h2>
+        <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.85rem;">
+          Cálculo proporcional aos meses trabalhados no ano corrente (mês trabalhado por 15 dias ou mais dá direito a 1/12). <strong>Valores Brutos sem descontos.</strong>
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Data Admissão</th>
+                <th>Salário Base</th>
+                <th>Avos (Proporção)</th>
+                <th>13º Integral (Total)</th>
+                <th>1ª Parcela (Até 30/Nov) - 50%</th>
+                <th>2ª Parcela (Até 20/Dez) - 50%</th>
+              </tr>
+            </thead>
+            <tbody id="decimo-terceiro-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA 7: FOLHA DE PAGAMENTO & DATAS -->
+    <div id="tab-folha" class="tab-content">
+      <div class="card">
+        <h2>Resumo Financeiro Mensal (Adiantamento + 5º Dia Útil)</h2>
+        <p style="margin-bottom: 15px; color: var(--text-muted); font-size: 0.85rem;">
+          Valores informados em <strong>Bruto</strong> (Sem descontos de INSS, FGTS ou impostos).
+        </p>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Funcionário</th>
+                <th>Salário Bruto</th>
+                <th>Adiantamento (Dia 20) - 40%</th>
+                <th>Ajuste de Horas (HE / Atrasos)</th>
+                <th>Saldo 5º Dia Útil (60% ± Ajustes)</th>
+                <th>Total do Mês</th>
+              </tr>
+            </thead>
+            <tbody id="folha-pagamento-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script src="./script.js"></script>
+</body>
+</html>
